@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us - Happy Creations</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<button class="dark-mode-btn" onclick="toggleDarkMode()" id="darkModeBtn">🌙</button>
+  <nav class="navbar">
+    <span>🎭 Happy Creations</span>
+    <div class="nav-links">
+      <a href="/choose">🛍️ Shop</a>
+      <a href="/about">About Us</a>
+      <a href="/contact">Contact</a>
+      <a href="/cart">🛒 Cart</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </nav>
+  <div class="about-hero">
+    <div class="about-hero-content">
+      <h1>About Happy Creations</h1>
+      <p>Making every celebration special since 2020!</p>
+    </div>
+  </div>
+  <div class="about-container">
+    <div class="about-story">
+      <div class="about-story-text">
+        <h2>🎭 Our Story</h2>
+        <p>Happy Creations was started with the motive to provide customers affordable and good quality clothes — both to rent and buy.</p>
+        <p>Founded by <b>Neha Neema</b> in Pune, Happy Creations has been serving families, schools, and event organizers for over 3 years with a wide range of costumes and ethnic wear.</p>
+        <p>From kids fancy dress competitions to Navratri celebrations — we have something for every occasion and every budget!</p>
+        <div class="tagline-box">
+          <p>💝 Join our <b>#HappyCreations</b> family and let us be a part of your celebrations!</p>
+        </div>
+      </div>
+      <div class="about-story-image">
+        <div class="founder-card">
+          <div class="founder-icon">👩‍💼</div>
+          <h3>Neha Neema</h3>
+          <p>Founder & Owner</p>
+          <p>Happy Creations</p>
+        </div>
+      </div>
+    </div>
+    <div class="why-us">
+      <h2>💝 Why Choose Happy Creations?</h2>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">💰</div>
+          <h3>Affordable Prices</h3>
+          <p>Best quality costumes at prices that won't break the bank!</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">👗</div>
+          <h3>Wide Collection</h3>
+          <p>From kids costumes to ethnic sarees — we have it all!</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">🛍️</div>
+          <h3>Buy or Rent</h3>
+          <p>Flexibility to buy or rent depending on your needs!</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">⭐</div>
+          <h3>Quality Assured</h3>
+          <p>Every costume is checked for quality before delivery!</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">💬</div>
+          <h3>Personal Service</h3>
+          <p>We are always available on WhatsApp for any help!</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">🎉</div>
+          <h3>For Every Occasion</h3>
+          <p>Navratri, fancy dress, weddings — we cover it all!</p>
+        </div>
+      </div>
+    </div>
+    <div class="categories-section">
+      <h2>🎭 What We Offer</h2>
+      <div class="categories-grid">
+        <div class="category-pill">👘 Sarees</div>
+        <div class="category-pill">👗 Lehengas</div>
+        <div class="category-pill">👶 Kids Costumes</div>
+        <div class="category-pill">🎭 Masks</div>
+        <div class="category-pill">🎪 Fancy Dresses</div>
+        <div class="category-pill">📿 Bracelets</div>
+      </div>
+    </div>
+  </div>
+{% if is_admin %}
+<a href="/switch_to_admin" class="float-admin-btn">⚙️ Back to Admin Panel</a>
+{% endif %}
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3>🎭 Happy Creations</h3>
+      <p>Your one-stop shop for costumes and ethnic wear for every occasion!</p>
+    </div>
+    <div class="footer-section">
+      <h4>📞 Contact Us</h4>
+      <p>📱 Phone: <a href="tel:7000673326">7000673326</a></p>
+      <p>📧 Email: <a href="mailto:nehaneema@gmail.com">nehaneema@gmail.com</a></p>
+      <p>📍 Address: Nyati Era, Pune</p>
+    </div>
+    <div class="footer-section">
+      <h4>🕐 Business Hours</h4>
+      <p>Monday - Saturday</p>
+      <p>10:00 AM - 7:00 PM</p>
+      <p>Sunday: Closed</p>
+    </div>
+    <div class="footer-section">
+      <h4>💬 WhatsApp Us</h4>
+      <a href="https://wa.me/917000673326" target="_blank" class="whatsapp-btn">
+        💬 Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Happy Creations. All rights reserved.</p>
+  </div>
+</footer>
+<a href="https://wa.me/917000673326" target="_blank" class="float-whatsapp">💬</a>
+<script>
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('darkModeBtn');
+    if (document.body.classList.contains('dark-mode')) {
+      btn.innerHTML = '☀️';
+      localStorage.setItem('darkMode', 'enabled');
+    } else {
+      btn.innerHTML = '🌙';
+      localStorage.setItem('darkMode', 'disabled');
+    }
+  }
+  window.onload = function() {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeBtn').innerHTML = '☀️';
+    }
+  }
+</script>
+</body>
+</html>
+

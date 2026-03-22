@@ -1,0 +1,7 @@
+venv/
+instance/
+__pycache__/
+*.pyc
+create_admin.py
+*.db
+

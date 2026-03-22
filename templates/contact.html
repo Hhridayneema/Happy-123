@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us - Happy Creations</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<button class="dark-mode-btn" onclick="toggleDarkMode()" id="darkModeBtn">🌙</button>
+  <nav class="navbar">
+    <span>🎭 Happy Creations</span>
+    <div class="nav-links">
+      <a href="/choose">🛍️ Shop</a>
+      <a href="/about">About Us</a>
+      <a href="/contact">Contact</a>
+      <a href="/cart">🛒 Cart</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </nav>
+  <div class="contact-hero">
+    <div class="about-hero-content">
+      <h1>Contact Us</h1>
+      <p>We would love to hear from you!</p>
+    </div>
+  </div>
+  <div class="contact-container">
+    <div class="contact-cards">
+      <div class="contact-card">
+        <div class="contact-icon">📱</div>
+        <h3>Phone</h3>
+        <p>Call us anytime during business hours!</p>
+        <a href="tel:7000673326" class="contact-link">7000673326</a>
+      </div>
+      <div class="contact-card">
+        <div class="contact-icon">📧</div>
+        <h3>Email</h3>
+        <p>Send us an email and we will reply soon!</p>
+        <a href="mailto:nehaneema@gmail.com" class="contact-link">nehaneema@gmail.com</a>
+      </div>
+      <div class="contact-card">
+        <div class="contact-icon">💬</div>
+        <h3>WhatsApp</h3>
+        <p>Chat with us directly on WhatsApp!</p>
+        <a href="https://wa.me/917000673326" target="_blank" class="contact-link whatsapp-link">Chat Now →</a>
+      </div>
+      <div class="contact-card">
+        <div class="contact-icon">📍</div>
+        <h3>Location</h3>
+        <p>Nyati Era</p>
+        <p>Pune</p>
+      </div>
+    </div>
+    <div class="hours-section">
+      <h2>🕐 Business Hours</h2>
+      <div class="hours-grid">
+        <div class="hours-row"><span>Monday</span><span class="hours-time">10:00 AM - 7:00 PM ✅</span></div>
+        <div class="hours-row"><span>Tuesday</span><span class="hours-time">10:00 AM - 7:00 PM ✅</span></div>
+        <div class="hours-row"><span>Wednesday</span><span class="hours-time">10:00 AM - 7:00 PM ✅</span></div>
+        <div class="hours-row"><span>Thursday</span><span class="hours-time">10:00 AM - 7:00 PM ✅</span></div>
+        <div class="hours-row"><span>Friday</span><span class="hours-time">10:00 AM - 7:00 PM ✅</span></div>
+        <div class="hours-row"><span>Saturday</span><span class="hours-time">10:00 AM - 7:00 PM ✅</span></div>
+        <div class="hours-row closed"><span>Sunday</span><span class="hours-time">Closed ❌</span></div>
+      </div>
+    </div>
+    <div class="whatsapp-section">
+      <div class="whatsapp-content">
+        <h2>💬 Chat With Us on WhatsApp!</h2>
+        <p>For quick responses — message us directly on WhatsApp!</p>
+        <p>We usually reply within a few minutes during business hours!</p>
+        <a href="https://wa.me/917000673326" target="_blank" class="btn-whatsapp-large">💬 Open WhatsApp Chat</a>
+      </div>
+    </div>
+  </div>
+{% if is_admin %}
+<a href="/switch_to_admin" class="float-admin-btn">⚙️ Back to Admin Panel</a>
+{% endif %}
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3>🎭 Happy Creations</h3>
+      <p>Your one-stop shop for costumes and ethnic wear for every occasion!</p>
+    </div>
+    <div class="footer-section">
+      <h4>📞 Contact Us</h4>
+      <p>📱 Phone: <a href="tel:7000673326">7000673326</a></p>
+      <p>📧 Email: <a href="mailto:nehaneema@gmail.com">nehaneema@gmail.com</a></p>
+      <p>📍 Address: Nyati Era, Pune</p>
+    </div>
+    <div class="footer-section">
+      <h4>🕐 Business Hours</h4>
+      <p>Monday - Saturday</p>
+      <p>10:00 AM - 7:00 PM</p>
+      <p>Sunday: Closed</p>
+    </div>
+    <div class="footer-section">
+      <h4>💬 WhatsApp Us</h4>
+      <a href="https://wa.me/917000673326" target="_blank" class="whatsapp-btn">
+        💬 Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Happy Creations. All rights reserved.</p>
+  </div>
+</footer>
+<a href="https://wa.me/917000673326" target="_blank" class="float-whatsapp">💬</a>
+<script>
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('darkModeBtn');
+    if (document.body.classList.contains('dark-mode')) {
+      btn.innerHTML = '☀️';
+      localStorage.setItem('darkMode', 'enabled');
+    } else {
+      btn.innerHTML = '🌙';
+      localStorage.setItem('darkMode', 'disabled');
+    }
+  }
+  window.onload = function() {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeBtn').innerHTML = '☀️';
+    }
+  }
+</script>
+</body>
+</html>
+

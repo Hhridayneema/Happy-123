@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products - Happy Creations</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<button class="dark-mode-btn" onclick="toggleDarkMode()" id="darkModeBtn">🌙</button>
+  <nav class="navbar">
+    <span>🎭 Happy Creations</span>
+    <div class="nav-links">
+      <a href="/choose">🛍️ Shop</a>
+      <a href="/about">About Us</a>
+      <a href="/contact">Contact</a>
+      <a href="/cart">🛒 Cart</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </nav>
+  <div class="page-header">
+    <h2>{{ "Buy" if mode == "buy" else "Rent" }} Our Collection</h2>
+    <span class="mode-badge {{ mode }}">{{ mode | upper }} MODE</span>
+  </div>
+  <div class="filter-container">
+    <button class="filter-btn active" onclick="filterProducts('all')">🎭 All</button>
+    <button class="filter-btn" onclick="filterProducts('saree')">👘 Sarees</button>
+    <button class="filter-btn" onclick="filterProducts('kids')">👶 Kids</button>
+    <button class="filter-btn" onclick="filterProducts('lehenga')">👗 Lehenga</button>
+    <button class="filter-btn" onclick="filterProducts('mask')">🎭 Masks</button>
+    <button class="filter-btn" onclick="filterProducts('fancydress')">🎪 Fancy Dresses</button>
+    <button class="filter-btn" onclick="filterProducts('bracelet')">📿 Bracelets</button>
+  </div>
+  <div class="products-grid" id="products-grid">
+    {% for product in products %}
+    <div class="product-card {% if not product.available %}out-of-stock-card{% endif %}"
+         data-category="{{ product.category }}">
+      {% if not product.available %}
+      <div class="out-of-stock-banner">OUT OF STOCK</div>
+      {% endif %}
+      <img src="{{ product.image_url }}" alt="{{ product.name }}"
+           class="product-img {% if not product.available %}img-faded{% endif %}">
+      <div class="product-info">
+        <span class="product-category">{{ product.category | upper }}</span>
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.description }}</p>
+        <div class="product-price">
+          {% if mode == 'buy' %}
+            <span class="price">₹{{ product.buy_price }}</span>
+          {% else %}
+            <span class="price">₹{{ product.rent_price }} <small>/day</small></span>
+          {% endif %}
+        </div>
+        {% if product.available %}
+        <form action="/add_to_cart" method="POST">
+          <input type="hidden" name="product_id" value="{{ product.id }}">
+          <input type="hidden" name="mode" value="{{ mode }}">
+          <div class="size-selector">
+            <label>Select Size:</label>
+            {% if product.category == 'kids' %}
+            <select name="size" required>
+              <option value="">-- Choose Size --</option>
+              <option value="2-3 Years">2-3 Years</option>
+              <option value="3-4 Years">3-4 Years</option>
+              <option value="4-5 Years">4-5 Years</option>
+              <option value="5-6 Years">5-6 Years</option>
+              <option value="6-7 Years">6-7 Years</option>
+              <option value="7-8 Years">7-8 Years</option>
+              <option value="8-10 Years">8-10 Years</option>
+            </select>
+            {% elif product.category == 'saree' %}
+            <select name="size" required>
+              <option value="">-- Choose Size --</option>
+              <option value="Free Size">Free Size (5.5 Meters)</option>
+              <option value="Free Size 6m">Free Size (6 Meters)</option>
+            </select>
+            {% elif product.category == 'bracelet' %}
+            <select name="size" required>
+              <option value="">-- Choose Size --</option>
+              <option value="Small">Small</option>
+              <option value="Medium">Medium</option>
+              <option value="Large">Large</option>
+              <option value="Free Size">Free Size</option>
+            </select>
+            {% elif product.category == 'mask' %}
+            <select name="size" required>
+              <option value="">-- Choose Size --</option>
+              <option value="Kids Size">Kids Size</option>
+              <option value="Adult Size">Adult Size</option>
+              <option value="Free Size">Free Size</option>
+            </select>
+            {% else %}
+            <select name="size" required>
+              <option value="">-- Choose Size --</option>
+              <option value="XS">XS (Extra Small)</option>
+              <option value="S">S (Small)</option>
+              <option value="M">M (Medium)</option>
+              <option value="L">L (Large)</option>
+              <option value="XL">XL (Extra Large)</option>
+              <option value="XXL">XXL (Double XL)</option>
+              <option value="XXXL">XXXL (Triple XL)</option>
+            </select>
+            {% endif %}
+          </div>
+          {% if mode == 'rent' %}
+          <div class="days-input">
+            <label>Number of Days:</label>
+            <input type="number" name="days" value="1" min="1" max="30">
+          </div>
+          {% else %}
+          <input type="hidden" name="days" value="1">
+          {% endif %}
+          <button type="submit" class="btn-cart">🛒 Add to Cart</button>
+        </form>
+        {% else %}
+        <button class="btn-out-of-stock" disabled>❌ Out of Stock</button>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div id="no-results" class="no-results hidden">
+    <p>😔 No products found in this category!</p>
+  </div>
+{% if is_admin %}
+<a href="/switch_to_admin" class="float-admin-btn">⚙️ Back to Admin Panel</a>
+{% endif %}
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3>🎭 Happy Creations</h3>
+      <p>Your one-stop shop for costumes and ethnic wear for every occasion!</p>
+    </div>
+    <div class="footer-section">
+      <h4>📞 Contact Us</h4>
+      <p>📱 Phone: <a href="tel:7000673326">7000673326</a></p>
+      <p>📧 Email: <a href="mailto:nehaneema@gmail.com">nehaneema@gmail.com</a></p>
+      <p>📍 Address: Nyati Era, Pune</p>
+    </div>
+    <div class="footer-section">
+      <h4>🕐 Business Hours</h4>
+      <p>Monday - Saturday</p>
+      <p>10:00 AM - 7:00 PM</p>
+      <p>Sunday: Closed</p>
+    </div>
+    <div class="footer-section">
+      <h4>💬 WhatsApp Us</h4>
+      <a href="https://wa.me/917000673326" target="_blank" class="whatsapp-btn">
+        💬 Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Happy Creations. All rights reserved.</p>
+  </div>
+</footer>
+<a href="https://wa.me/917000673326" target="_blank" class="float-whatsapp">💬</a>
+<script>
+function filterProducts(category) {
+  const cards = document.querySelectorAll('.product-card');
+  const buttons = document.querySelectorAll('.filter-btn');
+  const noResults = document.getElementById('no-results');
+  let visibleCount = 0;
+  buttons.forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  cards.forEach(card => {
+    if (category === 'all' || card.dataset.category === category) {
+      card.style.display = 'block';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  if (visibleCount === 0) {
+    noResults.classList.remove('hidden');
+  } else {
+    noResults.classList.add('hidden');
+  }
+}
+</script>
+<script>
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('darkModeBtn');
+    if (document.body.classList.contains('dark-mode')) {
+      btn.innerHTML = '☀️';
+      localStorage.setItem('darkMode', 'enabled');
+    } else {
+      btn.innerHTML = '🌙';
+      localStorage.setItem('darkMode', 'disabled');
+    }
+  }
+  window.onload = function() {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeBtn').innerHTML = '☀️';
+    }
+  }
+</script>
+</body>
+</html>
+

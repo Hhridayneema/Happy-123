@@ -16,13 +16,40 @@
       <a href="/contact">Contact</a>
       <a href="/cart">🛒 Cart</a>
       <a href="/my_orders">📦 My Orders</a>
+      <a href="/wishlist">❤️ Wishlist</a>
       <a href="/logout">Logout</a>
     </div>
   </nav>
+
   <div class="page-header">
     <h2>{{ "Buy" if mode == "buy" else "Rent" }} Our Collection</h2>
     <span class="mode-badge {{ mode }}">{{ mode | upper }} MODE</span>
   </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <form action="/products/{{ mode }}" method="GET" class="search-form" id="search-form">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="search" id="search-input"
+               placeholder="Search costumes, sarees, masks..."
+               value="{{ search }}" class="search-input"
+               autocomplete="off"
+               oninput="showSuggestions(this.value)"
+               onkeydown="handleKey(event)">
+        <button type="submit" class="search-btn">Search</button>
+        {% if search %}
+        <a href="/products/{{ mode }}" class="search-clear">✕</a>
+        {% endif %}
+      </div>
+      <!-- SUGGESTIONS DROPDOWN -->
+      <div id="suggestions-box" class="suggestions-box hidden"></div>
+    </form>
+    {% if search %}
+    <p class="search-results">Showing results for "<b>{{ search }}</b>"</p>
+    {% endif %}
+  </div>
+
   <div class="filter-container">
     <button class="filter-btn active" onclick="filterProducts('all')">🎭 All</button>
     <button class="filter-btn" onclick="filterProducts('saree')">👘 Sarees</button>
@@ -32,19 +59,42 @@
     <button class="filter-btn" onclick="filterProducts('fancydress')">🎪 Fancy Dresses</button>
     <button class="filter-btn" onclick="filterProducts('bracelet')">📿 Bracelets</button>
   </div>
+
   <div class="products-grid" id="products-grid">
     {% for product in products %}
     <div class="product-card {% if not product.available %}out-of-stock-card{% endif %}"
          data-category="{{ product.category }}">
+
       {% if not product.available %}
       <div class="out-of-stock-banner">OUT OF STOCK</div>
       {% endif %}
+
+      <!-- HEART WISHLIST BUTTON -->
+      <a href="/toggle_wishlist/{{ product.id }}?mode={{ mode }}"
+         class="heart-btn {% if product.id in wishlist_ids %}hearted{% endif %}">
+        {% if product.id in wishlist_ids %}❤️{% else %}🤍{% endif %}
+      </a>
+
+      <!-- CLICKABLE IMAGE -->
       <img src="{{ product.image_url }}" alt="{{ product.name }}"
-           class="product-img {% if not product.available %}img-faded{% endif %}">
+           class="product-img {% if not product.available %}img-faded{% endif %}"
+           onclick="openPanel(
+             '{{ product.image_url }}',
+             '{{ product.name }}',
+             '{{ product.category | upper }}',
+             `{{ product.description }}`,
+             {{ product.buy_price }},
+             {{ product.rent_price }},
+             {{ product.id }},
+             '{{ mode }}',
+             {{ product.available | lower }},
+             {% if product.id in wishlist_ids %}true{% else %}false{% endif %}
+           )">
+
       <div class="product-info">
         <span class="product-category">{{ product.category | upper }}</span>
         <h3>{{ product.name }}</h3>
-        <p>{{ product.description }}</p>
+        <p class="product-short-desc">{{ product.description[:80] }}...</p>
         <div class="product-price">
           {% if mode == 'buy' %}
             <span class="price">₹{{ product.buy_price }}</span>
@@ -162,12 +212,43 @@
     </div>
     {% endfor %}
   </div>
+
+  <!-- NO RESULTS MESSAGE -->
   <div id="no-results" class="no-results hidden">
-    <p>😔 No products found in this category!</p>
+    <div class="no-results-icon">😢</div>
+    <h3>Sorry, this product is not available!</h3>
+    <p>We don't have "<span id="searched-term"></span>" right now.</p>
+    <p>Please check back later or contact us on WhatsApp!</p>
+    <a href="https://wa.me/917000673326" target="_blank" class="btn-whatsapp-large">
+      💬 Ask on WhatsApp
+    </a>
   </div>
+
+<!-- PRODUCT DETAIL PANEL -->
+<div id="panel-overlay" class="panel-overlay" onclick="closePanel()"></div>
+<div id="product-panel" class="product-panel">
+  <button class="panel-close" onclick="closePanel()">✕</button>
+  <div class="panel-content">
+    <div class="panel-image-container">
+      <img id="panel-image" src="" alt="" class="panel-image">
+    </div>
+    <div class="panel-info">
+      <span id="panel-category" class="product-category"></span>
+      <h2 id="panel-name"></h2>
+      <div id="panel-price" class="panel-price"></div>
+      <p id="panel-description" class="panel-description"></p>
+      <div id="panel-form-container"></div>
+      <div class="panel-wishlist">
+        <a id="panel-wishlist-btn" href="#" class="panel-heart-btn">🤍 Add to Wishlist</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% if is_admin %}
 <a href="/switch_to_admin" class="float-admin-btn">⚙️ Back to Admin Panel</a>
 {% endif %}
+
 <footer class="footer">
   <div class="footer-container">
     <div class="footer-section">
@@ -197,8 +278,205 @@
     <p>© 2024 Happy Creations. All rights reserved.</p>
   </div>
 </footer>
+
 <a href="https://wa.me/917000673326" target="_blank" class="float-whatsapp">💬</a>
+
 <script>
+const currentMode = "{{ mode }}";
+
+// ALL PRODUCT NAMES FOR AUTOCOMPLETE
+const allProducts = [
+  {% for product in products %}
+  {
+    name: "{{ product.name }}",
+    category: "{{ product.category }}",
+    id: {{ product.id }}
+  },
+  {% endfor %}
+];
+
+// COMMON SEARCH SUGGESTIONS
+const commonSuggestions = [
+  "Saree", "Navratri Saree", "Lehenga", "Bridal Lehenga",
+  "Kids Costume", "Fairy Princess", "Superhero", "Doctor Costume",
+  "Mask", "Butterfly Mask", "Venetian Mask",
+  "Fancy Dress", "Pirate", "Witch", "Princess",
+  "Bracelet", "Gold Bracelet", "Pearl Bracelet", "Kundan Bangles"
+];
+
+let selectedIndex = -1;
+
+function showSuggestions(value) {
+  const box = document.getElementById('suggestions-box');
+  if (value.length < 2) {
+    box.classList.add('hidden');
+    return;
+  }
+  const filtered = allProducts.filter(p =>
+    p.name.toLowerCase().includes(value.toLowerCase()) ||
+    p.category.toLowerCase().includes(value.toLowerCase())
+  );
+  const commonFiltered = commonSuggestions.filter(s =>
+    s.toLowerCase().includes(value.toLowerCase())
+  );
+  let html = '';
+  const shown = new Set();
+  filtered.forEach(p => {
+    if (!shown.has(p.name)) {
+      shown.add(p.name);
+      const highlighted = p.name.replace(
+        new RegExp(value, 'gi'),
+        match => `<strong>${match}</strong>`
+      );
+      html += `<div class="suggestion-item" onclick="selectSuggestion('${p.name}')">
+        🎭 ${highlighted}
+        <span class="suggestion-category">${p.category}</span>
+      </div>`;
+    }
+  });
+  commonFiltered.forEach(s => {
+    if (!shown.has(s)) {
+      shown.add(s);
+      const highlighted = s.replace(
+        new RegExp(value, 'gi'),
+        match => `<strong>${match}</strong>`
+      );
+      html += `<div class="suggestion-item" onclick="selectSuggestion('${s}')">
+        🔍 ${highlighted}
+      </div>`;
+    }
+  });
+  if (html === '') {
+    box.classList.add('hidden');
+    return;
+  }
+  box.innerHTML = html;
+  box.classList.remove('hidden');
+  selectedIndex = -1;
+}
+
+function selectSuggestion(value) {
+  document.getElementById('search-input').value = value;
+  document.getElementById('suggestions-box').classList.add('hidden');
+  document.getElementById('search-form').submit();
+}
+
+function handleKey(event) {
+  const box = document.getElementById('suggestions-box');
+  const items = box.querySelectorAll('.suggestion-item');
+  if (event.key === 'ArrowDown') {
+    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+    items.forEach((item, i) => item.classList.toggle('active', i === selectedIndex));
+  } else if (event.key === 'ArrowUp') {
+    selectedIndex = Math.max(selectedIndex - 1, -1);
+    items.forEach((item, i) => item.classList.toggle('active', i === selectedIndex));
+  } else if (event.key === 'Enter' && selectedIndex >= 0) {
+    event.preventDefault();
+    items[selectedIndex].click();
+  } else if (event.key === 'Escape') {
+    box.classList.add('hidden');
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-form')) {
+    document.getElementById('suggestions-box').classList.add('hidden');
+  }
+});
+
+// PRODUCT DETAIL PANEL
+function openPanel(imageUrl, name, category, description, buyPrice, rentPrice, productId, mode, available, wishlisted) {
+  document.getElementById('panel-image').src = imageUrl;
+  document.getElementById('panel-name').textContent = name;
+  document.getElementById('panel-category').textContent = category;
+  document.getElementById('panel-description').textContent = description;
+
+  let priceHtml = '';
+  if (mode === 'buy') {
+    priceHtml = `<span class="price">₹${buyPrice}</span>`;
+  } else {
+    priceHtml = `<span class="price">₹${rentPrice} <small>/day</small></span>`;
+  }
+  document.getElementById('panel-price').innerHTML = priceHtml;
+
+  const wishlistBtn = document.getElementById('panel-wishlist-btn');
+  wishlistBtn.href = `/toggle_wishlist/${productId}?mode=${mode}`;
+  wishlistBtn.innerHTML = wishlisted ? '❤️ Remove from Wishlist' : '🤍 Add to Wishlist';
+
+  let formHtml = '';
+  if (available) {
+    let sizeOptions = '';
+    if (category === 'KIDS') {
+      sizeOptions = `<option value="">-- Choose Size --</option>
+        <option value="2-3 Years">2-3 Years</option>
+        <option value="3-4 Years">3-4 Years</option>
+        <option value="4-5 Years">4-5 Years</option>
+        <option value="5-6 Years">5-6 Years</option>
+        <option value="6-7 Years">6-7 Years</option>
+        <option value="7-8 Years">7-8 Years</option>
+        <option value="8-10 Years">8-10 Years</option>`;
+    } else if (category === 'SAREE') {
+      sizeOptions = `<option value="">-- Choose Size --</option>
+        <option value="Free Size">Free Size (5.5 Meters)</option>
+        <option value="Free Size 6m">Free Size (6 Meters)</option>`;
+    } else if (category === 'BRACELET') {
+      sizeOptions = `<option value="">-- Choose Size --</option>
+        <option value="Small">Small</option>
+        <option value="Medium">Medium</option>
+        <option value="Large">Large</option>
+        <option value="Free Size">Free Size</option>`;
+    } else if (category === 'MASK') {
+      sizeOptions = `<option value="">-- Choose Size --</option>
+        <option value="Kids Size">Kids Size</option>
+        <option value="Adult Size">Adult Size</option>
+        <option value="Free Size">Free Size</option>`;
+    } else {
+      sizeOptions = `<option value="">-- Choose Size --</option>
+        <option value="XS">XS (Extra Small)</option>
+        <option value="S">S (Small)</option>
+        <option value="M">M (Medium)</option>
+        <option value="L">L (Large)</option>
+        <option value="XL">XL (Extra Large)</option>
+        <option value="XXL">XXL (Double XL)</option>
+        <option value="XXXL">XXXL (Triple XL)</option>`;
+    }
+    let daysInput = '';
+    if (mode === 'rent') {
+      daysInput = `<div class="days-input">
+        <label>Number of Days:</label>
+        <input type="number" name="days" value="1" min="1" max="30">
+      </div>`;
+    } else {
+      daysInput = `<input type="hidden" name="days" value="1">`;
+    }
+    formHtml = `
+      <form action="/add_to_cart" method="POST" class="panel-form">
+        <input type="hidden" name="product_id" value="${productId}">
+        <input type="hidden" name="mode" value="${mode}">
+        <div class="size-selector">
+          <label>Select Size:</label>
+          <select name="size" required>${sizeOptions}</select>
+        </div>
+        ${daysInput}
+        <button type="submit" class="btn-cart">🛒 Add to Cart</button>
+      </form>`;
+  } else {
+    formHtml = `<button class="btn-out-of-stock" disabled>❌ Out of Stock</button>`;
+  }
+  document.getElementById('panel-form-container').innerHTML = formHtml;
+
+  document.getElementById('panel-overlay').classList.add('active');
+  document.getElementById('product-panel').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel() {
+  document.getElementById('panel-overlay').classList.remove('active');
+  document.getElementById('product-panel').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// FILTER PRODUCTS
 function filterProducts(category) {
   const cards = document.querySelectorAll('.product-card');
   const buttons = document.querySelectorAll('.filter-btn');
@@ -215,12 +493,26 @@ function filterProducts(category) {
     }
   });
   if (visibleCount === 0) {
+    document.getElementById('searched-term').textContent = category;
     noResults.classList.remove('hidden');
   } else {
     noResults.classList.add('hidden');
   }
 }
+
+// SHOW SEARCHED TERM IN NO RESULTS
+window.addEventListener('load', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const search = urlParams.get('search');
+  const noResults = document.getElementById('no-results');
+  const cards = document.querySelectorAll('.product-card');
+  if (search && cards.length === 0) {
+    document.getElementById('searched-term').textContent = search;
+    noResults.classList.remove('hidden');
+  }
+});
 </script>
+
 <script>
   function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
@@ -237,6 +529,14 @@ function filterProducts(category) {
     if (localStorage.getItem('darkMode') === 'enabled') {
       document.body.classList.add('dark-mode');
       document.getElementById('darkModeBtn').innerHTML = '☀️';
+    }
+    // Show no results if needed
+    const urlParams = new URLSearchParams(window.location.search);
+    const search = urlParams.get('search');
+    const cards = document.querySelectorAll('.product-card');
+    if (search && cards.length === 0) {
+      document.getElementById('searched-term').textContent = search;
+      document.getElementById('no-results').classList.remove('hidden');
     }
   }
 </script>

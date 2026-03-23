@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from datetime import datetime as dt
@@ -30,7 +30,7 @@ class Product(db.Model):
     description = db.Column(db.Text)
     buy_price = db.Column(db.Float)
     rent_price = db.Column(db.Float)
-    image_url = db.Column(db.String(300))
+    image_url = db.Column(db.String(500))
     available = db.Column(db.Boolean, default=True)
 
 class Review(db.Model):
@@ -64,6 +64,14 @@ class Order(db.Model):
     ordered_at = db.Column(db.DateTime, default=dt.utcnow)
     user = db.relationship('User')
     product = db.relationship('Product')
+
+class Wishlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+    created_at = db.Column(db.DateTime, default=dt.utcnow)
+    product = db.relationship('Product')
+    user = db.relationship('User')
 
 @app.route('/')
 def index():
@@ -123,9 +131,19 @@ def products(mode):
         return redirect(url_for('auth'))
     if mode not in ['buy', 'rent']:
         return redirect(url_for('choose'))
-    all_products = Product.query.order_by(Product.available.desc()).all()
+    search = request.args.get('search', '')
+    if search:
+        all_products = Product.query.filter(
+            Product.name.ilike(f'%{search}%') |
+            Product.category.ilike(f'%{search}%') |
+            Product.description.ilike(f'%{search}%')
+        ).order_by(Product.available.desc()).all()
+    else:
+        all_products = Product.query.order_by(Product.available.desc()).all()
     reviews = Review.query.all()
-    return render_template('products.html', products=all_products, mode=mode, reviews=reviews)
+    wishlist_ids = [w.product_id for w in Wishlist.query.filter_by(user_id=session['user_id']).all()]
+    return render_template('products.html', products=all_products, mode=mode,
+                         reviews=reviews, wishlist_ids=wishlist_ids, search=search)
 
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
@@ -204,15 +222,43 @@ def add_review(product_id):
         user_id=session['user_id'], product_id=product_id
     ).first()
     if not existing:
-        review = Review(
-            user_id=session['user_id'],
-            product_id=product_id,
-            rating=rating,
-            comment=comment
-        )
+        review = Review(user_id=session['user_id'], product_id=product_id,
+                       rating=rating, comment=comment)
         db.session.add(review)
         db.session.commit()
     return redirect(url_for('products', mode=request.form.get('mode', 'buy')))
+
+@app.route('/toggle_wishlist/<int:product_id>')
+def toggle_wishlist(product_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth'))
+    mode = request.args.get('mode', 'buy')
+    existing = Wishlist.query.filter_by(
+        user_id=session['user_id'], product_id=product_id
+    ).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+    else:
+        wishlist = Wishlist(user_id=session['user_id'], product_id=product_id)
+        db.session.add(wishlist)
+        db.session.commit()
+    return redirect(url_for('products', mode=mode))
+
+@app.route('/wishlist')
+def wishlist():
+    if 'user_id' not in session:
+        return redirect(url_for('auth'))
+    items = Wishlist.query.filter_by(user_id=session['user_id']).all()
+    return render_template('wishlist.html', items=items)
+
+@app.route('/remove_wishlist/<int:item_id>')
+def remove_wishlist(item_id):
+    item = Wishlist.query.get(item_id)
+    if item and item.user_id == session.get('user_id'):
+        db.session.delete(item)
+        db.session.commit()
+    return redirect(url_for('wishlist'))
 
 @app.route('/my_orders')
 def my_orders():
@@ -297,6 +343,7 @@ def delete_product(product_id):
     if product:
         CartItem.query.filter_by(product_id=product_id).delete()
         Review.query.filter_by(product_id=product_id).delete()
+        Wishlist.query.filter_by(product_id=product_id).delete()
         db.session.delete(product)
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
@@ -357,84 +404,112 @@ def setup_database():
         products = [
 
             # ── SAREES ──
-            Product(name="Navratri Saree - Red & Gold", category="saree",
-                    description="Beautiful traditional Gujarati saree perfect for Navratri",
+            Product(name="Navratri Saree - Red & Gold",
+                    category="saree",
+                    description="A stunning red and gold saree crafted specially for the Navratri festival. Made from premium quality fabric with rich golden border and intricate embroidery work. Perfect for Garba and Dandiya nights — you will shine in the crowd wearing this beautiful traditional piece.",
                     buy_price=500, rent_price=100,
-                    image_url="https://img.freepik.com/free-photo/indian-woman-wearing-traditional-saree_23-2149426422.jpg?w=400"),
-            Product(name="Navratri Saree - Green & Silver", category="saree",
-                    description="Elegant green saree with silver border for Navratri",
+                    image_url="https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTu3lD26ADLWvUaYuPW2v5yMAiWSGV5arxFW-ZswQxKhQhv6TwTg4UkOAfABv9CK6SRr5CeBIc795gG9E5a4ebPuD5la1PNLcdV5dK7Tzmi6XYB310KGo6fNg"),
+
+            Product(name="Navratri Saree - Green & Silver",
+                    category="saree",
+                    description="An elegant green saree with a beautiful silver border — perfect for Navratri celebrations. The soft fabric drapes gracefully and the silver threadwork adds a royal touch to your look. Ideal for women who love to blend tradition with elegance during festive occasions.",
                     buy_price=600, rent_price=120,
-                    image_url="https://img.freepik.com/free-photo/beautiful-indian-woman-traditional-green-saree_23-2149426418.jpg?w=400"),
+                    image_url="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcTYKjEPVcz52JY-jar9xyed8Eo48qdqQFz8Opgu2jj2UK3mfITSNAVkhkKNqTBjMm_nwZ5O5VUlL8z5eCfB92t7hTLseWms0B9JPDi7V39F5hSbMu_5-vMc"),
 
             # ── KIDS ──
-            Product(name="Kids Fairy Princess Costume", category="kids",
-                    description="Magical fairy costume with wings for fancy dress",
+            Product(name="Kids Fairy Princess Costume",
+                    category="kids",
+                    description="A magical fairy princess costume that will make your little one the star of any fancy dress competition. Complete with beautiful wings, a sparkly crown and a flowing pink dress that every little girl dreams of. Made from soft comfortable fabric — perfect for school events, birthday parties and fancy dress shows.",
                     buy_price=350, rent_price=80,
-                    image_url="https://img.freepik.com/free-photo/cute-little-girl-princess-costume_23-2149408087.jpg?w=400"),
-            Product(name="Kids Superhero Costume", category="kids",
-                    description="Superhero costume for school fancy dress events",
+                    image_url="https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcQIzFdam0V0LU6wiJJS3_cVERAsUDmGHj03QKdFzbmMqabKQ3AlKZzNFTUsEEglNiZjGmpRhvvSrikyFLCnpJv-s-sYzTQPBuf6NqLsrA9tSU24OID__JEioQ"),
+
+            Product(name="Kids Superhero Costume",
+                    category="kids",
+                    description="Let your child unleash their inner superhero with this amazing costume perfect for fancy dress events. Complete with a cape, mask and superhero suit — your child will feel powerful and confident. Made from durable and comfortable material that allows free movement during performances.",
                     buy_price=400, rent_price=90,
-                    image_url="https://img.freepik.com/free-photo/little-boy-superhero-costume_23-2149408091.jpg?w=400"),
-            Product(name="Kids Doctor Costume", category="kids",
-                    description="Doctor costume with stethoscope for fancy dress",
+                    image_url="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSDSDep7AX6Y09CXv5urbL0ZQXij-wXodNMm6IakASUpgazzdbFLeucppG0vrYnwscBW6gewb5mbj1m5PhX8gklE1OAhxiCPQ"),
+
+            Product(name="Kids Doctor Costume",
+                    category="kids",
+                    description="A complete doctor costume for your little one to shine at school fancy dress competitions. Comes with a white doctor coat, stethoscope, and doctor accessories that look very realistic. Perfect for teaching kids about professions while making them look absolutely adorable and confident.",
                     buy_price=300, rent_price=70,
-                    image_url="https://img.freepik.com/free-photo/little-girl-doctor-costume_23-2149408095.jpg?w=400"),
+                    image_url="https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQw6yoqNDux-41Xsf10qWHV8pb5_512IXm6U9QTv7sPl8hopcTkrbddLsobB1cBTrzKAqM3Hd-DX8lX91zvC_iKVIsrJ2BBHiufzGf3_q9hT4AeZeXWqr4alQ"),
 
             # ── LEHENGAS ──
-            Product(name="Rajasthani Lehenga - Pink", category="lehenga",
-                    description="Traditional Rajasthani lehenga with heavy embroidery",
+            Product(name="Rajasthani Lehenga - Pink",
+                    category="lehenga",
+                    description="A breathtaking pink Rajasthani lehenga with heavy traditional embroidery and mirror work that reflects the rich culture of Rajasthan. The vibrant pink colour and detailed craftsmanship make it perfect for festivals, weddings and cultural events. Every stitch tells a story of tradition and elegance.",
                     buy_price=1200, rent_price=200,
-                    image_url="https://img.freepik.com/free-photo/beautiful-indian-woman-pink-lehenga_23-2149426415.jpg?w=400"),
-            Product(name="Bridal Lehenga - Red", category="lehenga",
-                    description="Stunning red bridal lehenga with golden embroidery work",
+                    image_url="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRwIvBixc5gBj5ErWhDFCtk5cVL1_D74do-dLGXM8yOqo30ohCU-LkbQD7KEzq0kDTDG_ys5jRjVBej1e800WiVcio8D4DVVuITWqYDS1U"),
+
+            Product(name="Bridal Lehenga - Red",
+                    category="lehenga",
+                    description="A stunning red bridal lehenga adorned with heavy golden embroidery and intricate zari work — fit for a queen. This magnificent piece is crafted with premium fabric and detailed handwork that makes every bride look absolutely radiant on her special day. The rich red colour symbolises love, prosperity and new beginnings.",
                     buy_price=2500, rent_price=400,
-                    image_url="https://img.freepik.com/free-photo/indian-bride-red-lehenga_23-2149426419.jpg?w=400"),
-            Product(name="Lehenga - Blue & Silver", category="lehenga",
-                    description="Gorgeous blue lehenga with silver threadwork for functions",
+                    image_url="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcTm3xneht0e2xU4AR5tRskZo41GkeGU-kPKg_t8aBdO4CpjVDfT3Do705tcZzdG-RDnEyf-fByaXcMMsl-C6Xw3HBfbnzspMPDpQuzXXzrM5-YHoU7x6_CpGg"),
+
+            Product(name="Lehenga - Blue & Silver",
+                    category="lehenga",
+                    description="A gorgeous blue lehenga with delicate silver threadwork and sequin embellishments that catch the light beautifully. The royal blue colour paired with silver gives a sophisticated and elegant look perfect for weddings, sangeet ceremonies and festive functions. Light and comfortable to wear for long hours of celebration.",
                     buy_price=1800, rent_price=300,
-                    image_url="https://img.freepik.com/free-photo/beautiful-woman-blue-lehenga_23-2149426420.jpg?w=400"),
+                    image_url="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcRElkvw6arxSQnIpIlI4bqpf2GVQj-8kjd8FcY0PrDTMz66bDsZBHCuEZjy2FuAZr0zrflufAA2bhfXjNEsAjZa5eJXCaAfQqaiO0BEpnWSMyKX4B8LBDTHOA"),
 
             # ── MASKS ──
-            Product(name="Butterfly Mask - Gold", category="mask",
-                    description="Beautiful golden butterfly mask for parties and fancy dress",
+            Product(name="Butterfly Mask - Gold",
+                    category="mask",
+                    description="A beautiful golden butterfly mask crafted with glitter and fine detailing — perfect for masquerade parties, fancy dress events and themed celebrations. The lightweight design ensures comfort while the stunning golden finish makes you stand out in any crowd. One size fits most adults and children.",
                     buy_price=150, rent_price=30,
-                    image_url="https://img.freepik.com/free-photo/golden-butterfly-mask-carnival_23-2148825095.jpg?w=400"),
-            Product(name="Venetian Mask - Red & Black", category="mask",
-                    description="Elegant venetian mask perfect for costume parties",
+                    image_url="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRcJnAzlOkkcl-PgZX-104Oan70afgNIEFHr_W44ADvgWYnkLBd6j-wMamvgigT2KqMNAEfSPWD4IljSvPM1tkAu6D5IjS3wM0R6VWr4_-WWf2f1J3_bfF3iA"),
+
+            Product(name="Venetian Mask - Red & Black",
+                    category="mask",
+                    description="An elegant Venetian style mask in rich red and black — inspired by the grand masquerade balls of Venice, Italy. Decorated with intricate patterns, feathers and sequins that give a dramatic and mysterious look. Perfect for costume parties, theatre performances and Halloween events.",
                     buy_price=200, rent_price=40,
-                    image_url="https://img.freepik.com/free-photo/venetian-carnival-mask_23-2148825093.jpg?w=400"),
-            Product(name="Superhero Mask - Black", category="mask",
-                    description="Cool superhero mask for kids and adults fancy dress",
+                    image_url="https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcS9toJm68lNIWH7M2hf6QokMLqS6u10ZCIpAfq7vBqTRC9jXrSD41HXaNf0expJQJwjF01Zb_pyjDZ3vj-uYciwycm4znj7"),
+
+            Product(name="Superhero Mask - Black",
+                    category="mask",
+                    description="A cool black superhero mask made from premium quality material that fits comfortably on the face. Perfect for kids and adults who want to complete their superhero look for fancy dress competitions, birthday parties and themed events. The sleek black design gives a powerful and heroic appearance.",
                     buy_price=120, rent_price=25,
-                    image_url="https://img.freepik.com/free-photo/superhero-mask-black_23-2148825097.jpg?w=400"),
+                    image_url="https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRKTKPHjLJUksFMBpicHOHa-K0uIXlOQut04R4-lYyD1RuWqQ5EbRToSVes93fUF4ibdkVbFC0PNAlxw7fr6GuoDu0nEYCBbg"),
 
             # ── FANCY DRESSES ──
-            Product(name="Princess Fancy Dress - Pink", category="fancydress",
-                    description="Beautiful pink princess fancy dress with crown for kids",
+            Product(name="Princess Fancy Dress - Pink",
+                    category="fancydress",
+                    description="A dreamy pink princess fancy dress that will make your little girl feel like royalty. Complete with a beautiful flared skirt, sparkly crown and elegant design inspired by fairy tale princesses. Made from soft breathable fabric that keeps children comfortable during long events and performances.",
                     buy_price=600, rent_price=120,
-                    image_url="https://img.freepik.com/free-photo/little-girl-princess-pink-dress_23-2149408089.jpg?w=400"),
-            Product(name="Pirate Fancy Dress", category="fancydress",
-                    description="Complete pirate costume with hat and accessories",
+                    image_url="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQMrK3XtM0KAg1RAMG44PISpMASdpvHGuFw9ghmCTbVmZkg8oEmS8qqAY4cdenCvTiEoxMmvutSxvyne_kfBbYpuWWSMHX4mg"),
+
+            Product(name="Pirate Fancy Dress",
+                    category="fancydress",
+                    description="A complete and exciting pirate costume that will transport your child to the high seas of adventure. Includes a pirate hat, striped shirt, belt and eye patch — everything needed to create an authentic pirate look. Perfect for fancy dress competitions, Halloween parties and themed birthday celebrations.",
                     buy_price=550, rent_price=110,
-                    image_url="https://img.freepik.com/free-photo/boy-pirate-costume_23-2149408093.jpg?w=400"),
-            Product(name="Witch Fancy Dress", category="fancydress",
-                    description="Spooky witch costume with hat for Halloween and events",
+                    image_url="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcTfRW675-mRFXi-UN3JQOEKP_Z9aA7tBIWn1pdIrV2Ghy2SKkjU1-c86fmGxh-4uhP87KEzHjWuziueqHsC5iECDl1HFxB02keX6t7D2CPMMeiT8cgJR5y8"),
+
+            Product(name="Witch Fancy Dress",
+                    category="fancydress",
+                    description="A spooky and stylish witch costume perfect for Halloween parties, fancy dress competitions and themed events. Complete with a dramatic black dress, pointed witch hat and accessories that create a hauntingly beautiful look. Available for both kids and adults — guaranteed to make a memorable impression at any event.",
                     buy_price=500, rent_price=100,
-                    image_url="https://img.freepik.com/free-photo/witch-costume-halloween_23-2149408097.jpg?w=400"),
+                    image_url="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQhuXW1n4S8F9atL30NTW6UasknJvI68eskhdwBc6yTjLfYbzuz-OkJjDmXp1iMLAr4QWgpF_5mZJZfth0Vi-3GeYOpi5fvHquVPd1IZZf6KY5bJNDReQ_gOA"),
 
             # ── BRACELETS ──
-            Product(name="Traditional Gold Bracelet", category="bracelet",
-                    description="Beautiful traditional gold bracelet for ethnic occasions",
+            Product(name="Traditional Gold Bracelet",
+                    category="bracelet",
+                    description="A beautifully crafted traditional gold bracelet that adds an ethnic and elegant touch to any outfit. Made with high quality gold plated metal with intricate traditional patterns and designs. Perfect for Navratri, weddings, festivals and any ethnic occasion where you want to look your absolute best.",
                     buy_price=300, rent_price=50,
-                    image_url="https://img.freepik.com/free-photo/gold-bangles-indian-traditional_23-2148825099.jpg?w=400"),
-            Product(name="Pearl Bracelet Set", category="bracelet",
-                    description="Elegant pearl bracelet set for weddings and festivals",
+                    image_url="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQD7Cx_PXeeUOjrEZ2CDfy4ZAWnpeQeVe33H-ykErDSUyByGTA8IX_hUpMGtTXUzYvOAHbjzciKuhACRm2LlD5xk3JXn8eCyg"),
+
+            Product(name="Pearl Bracelet Set",
+                    category="bracelet",
+                    description="An elegant set of pearl bracelets that add a delicate and sophisticated charm to your look. The lustrous pearls are carefully strung together in a design that complements both traditional and modern outfits. Perfect for brides, bridesmaids and women who love timeless jewellery at weddings and special occasions.",
                     buy_price=250, rent_price=40,
-                    image_url="https://img.freepik.com/free-photo/pearl-bracelet-jewelry_23-2148825101.jpg?w=400"),
-            Product(name="Kundan Bangles Set", category="bracelet",
-                    description="Beautiful kundan bangles set for Navratri and festivals",
+                    image_url="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRJ-CtnJPvKDRkXegrBqTw4hBu6SXKQ48_xGqxmua6ChFD_y0yHsD0Mzk8fWQ002K8spxJRFRU1I7sZysT_CeTseaRp98Js74-fMTv2w5hL0tJM4G-TalxLJw"),
+
+            Product(name="Kundan Bangles Set",
+                    category="bracelet",
+                    description="A stunning set of Kundan bangles crafted with beautiful gemstone work and traditional Kundan setting that reflects the rich jewellery heritage of India. The vibrant colours and intricate designs make them perfect for Navratri, Diwali, weddings and all festive occasions. Stack them together for a bold traditional look.",
                     buy_price=350, rent_price=60,
-                    image_url="https://img.freepik.com/free-photo/kundan-bangles-indian-jewelry_23-2148825103.jpg?w=400"),
+                    image_url="https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcTiIW2UnisywpzDeX-lrYFd19sFQj-30MeQYDInpsZ2-l5P20skbhPkgvh6vXyWnZIMWm1VAPw9Z1eReuOTXmOMG7JkA-lvS1hBTU1liAPHZsKw-FbO4ffnVw"),
         ]
         for p in products:
             db.session.add(p)
@@ -448,3 +523,4 @@ if __name__ == '__main__':
     app.run(debug=True)
 
     
+

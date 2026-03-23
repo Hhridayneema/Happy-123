@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Wishlist - Happy Creations</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<button class="dark-mode-btn" onclick="toggleDarkMode()" id="darkModeBtn">🌙</button>
+  <nav class="navbar">
+    <span>🎭 Happy Creations</span>
+    <div class="nav-links">
+      <a href="/choose">🛍️ Shop</a>
+      <a href="/about">About Us</a>
+      <a href="/contact">Contact</a>
+      <a href="/cart">🛒 Cart</a>
+      <a href="/my_orders">📦 My Orders</a>
+      <a href="/wishlist">❤️ Wishlist</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </nav>
+  <div class="cart-container">
+    <h2>❤️ My Wishlist</h2>
+    {% if items %}
+    <div class="cart-items">
+      {% for item in items %}
+      <div class="cart-item">
+        <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}">
+        <div class="cart-item-info">
+          <h4>{{ item.product.name }}</h4>
+          <span class="product-category">{{ item.product.category | upper }}</span>
+          <p>Buy: <b>₹{{ item.product.buy_price }}</b> | Rent: <b>₹{{ item.product.rent_price }}/day</b></p>
+          <div class="wishlist-actions">
+            <a href="/products/buy" class="btn-cart-small">🛒 Shop Now</a>
+            <a href="/remove_wishlist/{{ item.id }}" class="btn-remove">✕ Remove</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-cart">
+      <div class="empty-icon">❤️</div>
+      <p>Your wishlist is empty!</p>
+      <a href="/choose" class="btn-primary">Start Shopping</a>
+    </div>
+    {% endif %}
+  </div>
+{% if is_admin %}
+<a href="/switch_to_admin" class="float-admin-btn">⚙️ Back to Admin Panel</a>
+{% endif %}
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-section">
+      <h3>🎭 Happy Creations</h3>
+      <p>Your one-stop shop for costumes and ethnic wear for every occasion!</p>
+    </div>
+    <div class="footer-section">
+      <h4>📞 Contact Us</h4>
+      <p>📱 Phone: <a href="tel:7000673326">7000673326</a></p>
+      <p>📧 Email: <a href="mailto:nehaneema@gmail.com">nehaneema@gmail.com</a></p>
+      <p>📍 Address: Nyati Era, Pune</p>
+    </div>
+    <div class="footer-section">
+      <h4>🕐 Business Hours</h4>
+      <p>Monday - Saturday</p>
+      <p>10:00 AM - 7:00 PM</p>
+      <p>Sunday: Closed</p>
+    </div>
+    <div class="footer-section">
+      <h4>💬 WhatsApp Us</h4>
+      <a href="https://wa.me/917000673326" target="_blank" class="whatsapp-btn">
+        💬 Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 Happy Creations. All rights reserved.</p>
+  </div>
+</footer>
+<a href="https://wa.me/917000673326" target="_blank" class="float-whatsapp">💬</a>
+<script>
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('darkModeBtn');
+    if (document.body.classList.contains('dark-mode')) {
+      btn.innerHTML = '☀️';
+      localStorage.setItem('darkMode', 'enabled');
+    } else {
+      btn.innerHTML = '🌙';
+      localStorage.setItem('darkMode', 'disabled');
+    }
+  }
+  window.onload = function() {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeBtn').innerHTML = '☀️';
+    }
+  }
+</script>
+</body>
+</html>
+
+

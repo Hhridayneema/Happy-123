@@ -15,6 +15,7 @@
       <a href="/about">About Us</a>
       <a href="/contact">Contact</a>
       <a href="/cart">🛒 Cart</a>
+      <a href="/my_orders">📦 My Orders</a>
       <a href="/logout">Logout</a>
     </div>
   </nav>
@@ -115,6 +116,48 @@
         {% else %}
         <button class="btn-out-of-stock" disabled>❌ Out of Stock</button>
         {% endif %}
+
+        <!-- REVIEWS SECTION -->
+        <div class="reviews-section">
+          <h4>⭐ Reviews</h4>
+          {% set product_reviews = reviews | selectattr('product_id', 'equalto', product.id) | list %}
+          {% if product_reviews %}
+            {% for review in product_reviews %}
+            <div class="review-item">
+              <div class="review-header">
+                <span class="review-name">👤 {{ review.user.name }}</span>
+                <span class="review-stars">
+                  {% for i in range(review.rating) %}⭐{% endfor %}
+                </span>
+              </div>
+              <p class="review-comment">{{ review.comment }}</p>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="no-reviews">No reviews yet — be the first!</p>
+          {% endif %}
+          {% if product.available %}
+          <div class="add-review">
+            <form action="/add_review/{{ product.id }}" method="POST">
+              <input type="hidden" name="mode" value="{{ mode }}">
+              <div class="star-rating">
+                <label>Your Rating:</label>
+                <select name="rating" required>
+                  <option value="">-- Rate --</option>
+                  <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                  <option value="4">⭐⭐⭐⭐ Very Good</option>
+                  <option value="3">⭐⭐⭐ Good</option>
+                  <option value="2">⭐⭐ Average</option>
+                  <option value="1">⭐ Poor</option>
+                </select>
+              </div>
+              <textarea name="comment" placeholder="Write your review here..." rows="2"></textarea>
+              <button type="submit" class="btn-review">Submit Review</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+
       </div>
     </div>
     {% endfor %}
@@ -199,4 +242,5 @@ function filterProducts(category) {
 </script>
 </body>
 </html>
+
 

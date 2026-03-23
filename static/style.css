@@ -1189,3 +1189,183 @@ body.dark-mode .footer { background: #0f3460; }
 }
 body.dark-mode .dark-mode-btn { background: #f39c12; }
 
+/* ─────────────────────────────────────────
+   FESTIVAL BANNERS
+───────────────────────────────────────── */
+.festival-banner {
+  margin: 0;
+  padding: 25px 30px;
+  text-align: center;
+}
+.festival-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+.festival-emoji { font-size: 50px; }
+.festival-text h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.festival-text p {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  opacity: 0.9;
+}
+.festival-btn {
+  display: inline-block;
+  background: white;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.3s;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.15);
+}
+.festival-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+/* HOLI */
+.holi-banner {
+  background: linear-gradient(135deg, #ff6b9d, #ffd93d, #6bcb77, #4d96ff);
+}
+.holi-banner .festival-text h2 { color: white; }
+.holi-banner .festival-text p { color: white; }
+.holi-banner .festival-btn { color: #ff6b9d; }
+
+/* NAVRATRI */
+.navratri-banner {
+  background: linear-gradient(135deg, #e63946, #f4a261, #e63946);
+}
+.navratri-banner .festival-text h2 { color: white; }
+.navratri-banner .festival-text p { color: white; }
+.navratri-banner .festival-btn { color: #e63946; }
+
+/* DIWALI */
+.diwali-banner {
+  background: linear-gradient(135deg, #f7b731, #fd9644, #e55039);
+}
+.diwali-banner .festival-text h2 { color: white; }
+.diwali-banner .festival-text p { color: white; }
+.diwali-banner .festival-btn { color: #e55039; }
+
+/* ─────────────────────────────────────────
+   REVIEWS
+───────────────────────────────────────── */
+.reviews-section {
+  margin-top: 15px;
+  border-top: 2px solid #f0f0f0;
+  padding-top: 15px;
+}
+.reviews-section h4 {
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+.review-item {
+  background: #f9f9f9;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.review-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+}
+.review-stars { font-size: 0.82rem; }
+.review-comment {
+  font-size: 0.82rem;
+  color: #777;
+  margin: 0;
+}
+.no-reviews {
+  font-size: 0.82rem;
+  color: #aaa;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+.add-review { margin-top: 10px; }
+.star-rating { margin-bottom: 8px; }
+.star-rating label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+  display: block;
+  margin-bottom: 4px;
+}
+.star-rating select {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  outline: none;
+}
+.add-review textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #e8e8e8;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  resize: none;
+  outline: none;
+  margin-bottom: 8px;
+}
+.add-review textarea:focus { border-color: #c0392b; }
+.btn-review {
+  width: 100%;
+  padding: 10px;
+  background: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.btn-review:hover { background: #e67e22; }
+
+/* DARK MODE FOR REVIEWS AND BANNERS */
+body.dark-mode .review-item { background: #0f3460; }
+body.dark-mode .review-name { color: #e0e0e0; }
+body.dark-mode .review-comment { color: #aaa; }
+body.dark-mode .reviews-section { border-top-color: #0f3460; }
+body.dark-mode .star-rating select {
+  background: #0f3460;
+  border-color: #0f3460;
+  color: #e0e0e0;
+}
+body.dark-mode .add-review textarea {
+  background: #0f3460;
+  border-color: #0f3460;
+  color: #e0e0e0;
+}
+
+/* FESTIVAL BANNER MOBILE */
+@media (max-width: 480px) {
+  .festival-emoji { font-size: 35px; }
+  .festival-text h2 { font-size: 1.3rem; }
+  .festival-text p { font-size: 0.88rem; }
+  .festival-btn { padding: 10px 20px; font-size: 0.88rem; }
+}
+
+

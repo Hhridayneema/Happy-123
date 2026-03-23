@@ -15,9 +15,13 @@
       <a href="/about">About Us</a>
       <a href="/contact">Contact</a>
       <a href="/cart">🛒 Cart</a>
+      <a href="/my_orders">📦 My Orders</a>
       <a href="/logout">Logout</a>
     </div>
   </nav>
+
+  {% include 'festival_banner.html' %}
+
   <div class="choose-container">
     <h2>What would you like to do today?</h2>
     <div class="choose-cards">
@@ -35,9 +39,11 @@
       </a>
     </div>
   </div>
+
 {% if is_admin %}
 <a href="/switch_to_admin" class="float-admin-btn">⚙️ Back to Admin Panel</a>
 {% endif %}
+
 <footer class="footer">
   <div class="footer-container">
     <div class="footer-section">
@@ -67,7 +73,9 @@
     <p>© 2024 Happy Creations. All rights reserved.</p>
   </div>
 </footer>
+
 <a href="https://wa.me/917000673326" target="_blank" class="float-whatsapp">💬</a>
+
 <script>
   function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
@@ -89,3 +97,4 @@
 </script>
 </body>
 </html>
+```

@@ -1,0 +1,45 @@
+{% set current_month = now.month %}
+
+{% if current_month == 3 %}
+<!-- HOLI BANNER - March -->
+<div class="festival-banner holi-banner">
+  <div class="festival-content">
+    <div class="festival-emoji">🎨</div>
+    <div class="festival-text">
+      <h2>Happy Holi! 🌈</h2>
+      <p>Celebrate the festival of colours with our special collection!</p>
+      <a href="/products/rent" class="festival-btn">Shop Holi Collection →</a>
+    </div>
+    <div class="festival-emoji">🎨</div>
+  </div>
+</div>
+
+{% elif current_month == 10 %}
+<!-- NAVRATRI & DUSSEHRA BANNER - October -->
+<div class="festival-banner navratri-banner">
+  <div class="festival-content">
+    <div class="festival-emoji">🪷</div>
+    <div class="festival-text">
+      <h2>Navratri & Dussehra Special! 🎉</h2>
+      <p>Get the most beautiful sarees and lehengas for this festive season!</p>
+      <a href="/products/rent" class="festival-btn">Shop Festive Collection →</a>
+    </div>
+    <div class="festival-emoji">🪷</div>
+  </div>
+</div>
+
+{% elif current_month == 11 %}
+<!-- DIWALI BANNER - November -->
+<div class="festival-banner diwali-banner">
+  <div class="festival-content">
+    <div class="festival-emoji">🪔</div>
+    <div class="festival-text">
+      <h2>Happy Diwali! ✨</h2>
+      <p>Light up your celebrations with our stunning ethnic collection!</p>
+      <a href="/products/buy" class="festival-btn">Shop Diwali Collection →</a>
+    </div>
+    <div class="festival-emoji">🪔</div>
+  </div>
+</div>
+
+{% endif %}

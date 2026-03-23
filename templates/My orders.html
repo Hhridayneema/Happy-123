@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome!</title>
+  <title>My Orders - Happy Creations</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="welcome-page">
+<body>
 <button class="dark-mode-btn" onclick="toggleDarkMode()" id="darkModeBtn">🌙</button>
   <nav class="navbar">
     <span>🎭 Happy Creations</span>
@@ -15,20 +15,43 @@
       <a href="/about">About Us</a>
       <a href="/contact">Contact</a>
       <a href="/cart">🛒 Cart</a>
-       <a href="/my_orders">📦 My Orders</a>
+      <a href="/my_orders">📦 My Orders</a>
       <a href="/logout">Logout</a>
     </div>
   </nav>
-  <div class="welcome-container">
-    <div class="welcome-icon">🎉</div>
-    <h1>Welcome back,</h1>
-    <h2 class="user-name">{{ name }}!</h2>
-    <p>We're so happy to have you here</p>
-    <div class="loading-bar"><div class="loading-fill"></div></div>
+  <div class="cart-container">
+    <h2>📦 My Orders</h2>
+    {% if orders %}
+    {% for order in orders %}
+    <div class="cart-item">
+      <img src="{{ order.product.image_url }}" alt="{{ order.product.name }}">
+      <div class="cart-item-info">
+        <h4>{{ order.product.name }}</h4>
+        <span class="mode-badge {{ order.mode }}">{{ order.mode | upper }}</span>
+        <div class="cart-size">📏 Size: <b>{{ order.size }}</b></div>
+        {% if order.mode == 'rent' %}
+        <p>{{ order.days }} day(s) — <b>₹{{ order.total_price }}</b></p>
+        {% else %}
+        <p>Bought for <b>₹{{ order.total_price }}</b></p>
+        {% endif %}
+        <p>📅 {{ order.ordered_at.strftime('%d %b %Y') }}</p>
+        <span class="status-badge
+          {% if order.status == 'confirmed' %}available
+          {% elif order.status == 'delivered' %}delivered
+          {% else %}pending-badge{% endif %}">
+          {{ order.status | upper }}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-cart">
+      <div class="empty-icon">📦</div>
+      <p>No orders yet!</p>
+      <a href="/choose" class="btn-primary">Start Shopping</a>
+    </div>
+    {% endif %}
   </div>
-  <script>
-    setTimeout(() => { window.location.href = "/choose"; }, 2500);
-  </script>
 {% if is_admin %}
 <a href="/switch_to_admin" class="float-admin-btn">⚙️ Back to Admin Panel</a>
 {% endif %}
@@ -83,5 +106,6 @@
 </script>
 </body>
 </html>
+
 
 

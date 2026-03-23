@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from datetime import datetime
+from datetime import datetime as dt
 
 app = Flask(__name__)
 app.secret_key = 'happycreations_secret_2024'
@@ -21,7 +21,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=dt.utcnow)
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,6 +32,16 @@ class Product(db.Model):
     rent_price = db.Column(db.Float)
     image_url = db.Column(db.String(300))
     available = db.Column(db.Boolean, default=True)
+
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+    rating = db.Column(db.Integer)
+    comment = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=dt.utcnow)
+    user = db.relationship('User')
+    product = db.relationship('Product')
 
 class CartItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,7 +61,7 @@ class Order(db.Model):
     size = db.Column(db.String(20), default='Free Size')
     total_price = db.Column(db.Float)
     status = db.Column(db.String(50), default='pending')
-    ordered_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ordered_at = db.Column(db.DateTime, default=dt.utcnow)
     user = db.relationship('User')
     product = db.relationship('Product')
 
@@ -105,7 +115,7 @@ def welcome():
 def choose():
     if 'user_id' not in session:
         return redirect(url_for('auth'))
-    return render_template('choose.html')
+    return render_template('choose.html', now=dt.now())
 
 @app.route('/products/<mode>')
 def products(mode):
@@ -114,7 +124,8 @@ def products(mode):
     if mode not in ['buy', 'rent']:
         return redirect(url_for('choose'))
     all_products = Product.query.order_by(Product.available.desc()).all()
-    return render_template('products.html', products=all_products, mode=mode)
+    reviews = Review.query.all()
+    return render_template('products.html', products=all_products, mode=mode, reviews=reviews)
 
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
@@ -183,10 +194,32 @@ def place_order():
     db.session.commit()
     return render_template('order_success.html', name=session['user_name'])
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
+@app.route('/add_review/<int:product_id>', methods=['POST'])
+def add_review(product_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth'))
+    rating = int(request.form.get('rating'))
+    comment = request.form.get('comment')
+    existing = Review.query.filter_by(
+        user_id=session['user_id'], product_id=product_id
+    ).first()
+    if not existing:
+        review = Review(
+            user_id=session['user_id'],
+            product_id=product_id,
+            rating=rating,
+            comment=comment
+        )
+        db.session.add(review)
+        db.session.commit()
+    return redirect(url_for('products', mode=request.form.get('mode', 'buy')))
+
+@app.route('/my_orders')
+def my_orders():
+    if 'user_id' not in session:
+        return redirect(url_for('auth'))
+    orders = Order.query.filter_by(user_id=session['user_id']).order_by(Order.ordered_at.desc()).all()
+    return render_template('my_orders.html', orders=orders)
 
 @app.route('/about')
 def about():
@@ -195,6 +228,11 @@ def about():
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
 @app.route('/admin')
 def admin_dashboard():
@@ -258,6 +296,7 @@ def delete_product(product_id):
     product = Product.query.get(product_id)
     if product:
         CartItem.query.filter_by(product_id=product_id).delete()
+        Review.query.filter_by(product_id=product_id).delete()
         db.session.delete(product)
         db.session.commit()
     return redirect(url_for('admin_dashboard'))
@@ -289,13 +328,31 @@ def update_order(order_id):
 
 def setup_database():
     db.create_all()
+
     if not User.query.filter_by(email='hridayneema@gmail.com').first():
         hashed_pw = bcrypt.generate_password_hash('Hriday_1234').decode('utf-8')
         admin = User(name='Hriday Neema', email='hridayneema@gmail.com',
                     password=hashed_pw, is_admin=True)
         db.session.add(admin)
         db.session.commit()
-        print("✅ Admin account created!")
+        print("✅ Admin 1 created!")
+
+    if not User.query.filter_by(email='nehaneema18@gmail.com').first():
+        hashed_pw = bcrypt.generate_password_hash('Neha_1234').decode('utf-8')
+        admin2 = User(name='Neha Neema', email='nehaneema18@gmail.com',
+                    password=hashed_pw, is_admin=True)
+        db.session.add(admin2)
+        db.session.commit()
+        print("✅ Admin 2 created!")
+
+    if not User.query.filter_by(email='pneema@gmail.com').first():
+        hashed_pw = bcrypt.generate_password_hash('Pneema_1234').decode('utf-8')
+        admin3 = User(name='P Neema', email='pneema@gmail.com',
+                    password=hashed_pw, is_admin=True)
+        db.session.add(admin3)
+        db.session.commit()
+        print("✅ Admin 3 created!")
+
     if Product.query.count() == 0:
         products = [
 
@@ -390,3 +447,4 @@ with app.app_context():
 if __name__ == '__main__':
     app.run(debug=True)
 
+    
